@@ -138,10 +138,14 @@ PUTCHR:
 	TYA
 	PHA
 
-	LDA #0
 	LDY TTYCOL		; Load current TTY column
-	STA (VRAMOFF0),Y	; Clear cursor
 
+	LDA CURSOR		; Clear cursor in VRAM if set
+	BEQ @SkipClearCursor 
+	LDA #0
+	STA (VRAMOFF0),Y
+
+@SkipClearCursor:
 	LDA TEMP
 
 	CMP #CR			; If character is CR, increment line
