@@ -3,7 +3,6 @@
  * (c) 2014-2015 Michał Siejak
  */
 
-
 #include <cstring>
 #include "common.h"
 #include "cpu.h"
@@ -304,7 +303,7 @@ void CPU::Step()
     case 0x28: FlagRegister() = StackPop() | 0x30; break;
 
     default:
-        std::printf("Illegal opcode: %x!\n", OpCode);
+        std::fprintf(stderr, "Illegal opcode: %02x @ PC=%04x!\n", OpCode, PC-1);
         break;
     }
 }
@@ -471,11 +470,10 @@ U8 CPU::OpSBC(U8 OpA, U8 OpB)
 
 void CPU::Branch(bool Condition)
 {
-    const S8 Offset = ReadImmediate();
-    if(Condition) {
-        Cycles += 1;
-        PC += Offset;
-    }
+    if(Condition)
+        PC += static_cast<S8>(ReadImmediate());
+    else
+        ++PC;
 }
 
 void CPU::StackPush(U8 Value)

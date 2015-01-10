@@ -16,7 +16,8 @@ public:
     Keyboard(CPU* InCPU);
     void TranslateEvent(SDL_KeyboardEvent Event);
 
-    std::queue<U8> Buffer;
+    U8 Data;
+    U8 Status;
 private:
     U8   ReadRegister(U8 Reg);
     void WriteRegister(U8 Reg, U8 Data);

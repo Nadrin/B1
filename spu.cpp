@@ -10,8 +10,8 @@
 
 namespace {
     enum Registers {
-        RegAudioCtl  = 0x0B,
-        RegFrequency = 0x0C,
+        RegAudioCtl  = 0x0C,
+        RegFrequency = 0x0D,
     };
     enum Waveforms {
         WaveFlat     = 0x00,

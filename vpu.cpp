@@ -13,16 +13,16 @@ namespace {
     const U8  Overscan = 32;
 
     enum Registers {
-        RegScanline    = 0x01,
-        RegRasterInt   = 0x02,
-        RegBrColorLo   = 0x03,
-        RegBrColorHi   = 0x04,
-        RegBgColorLo   = 0x05,
-        RegBgColorHi   = 0x06,
-        RegFgColorLo   = 0x07,
-        RegFgColorHi   = 0x08,
-        RegFramePage   = 0x09,
-        RegCharMapPage = 0x0A,
+        RegScanline    = 0x02,
+        RegRasterInt   = 0x03,
+        RegBrColorLo   = 0x04,
+        RegBrColorHi   = 0x05,
+        RegBgColorLo   = 0x06,
+        RegBgColorHi   = 0x07,
+        RegFgColorLo   = 0x08,
+        RegFgColorHi   = 0x09,
+        RegFramePage   = 0x0A,
+        RegCharMapPage = 0x0B,
     };
 
     constexpr U16 FrameBegin[] = { 0 + (Overscan>>1), 0 + (Overscan>>1) };
@@ -53,8 +53,8 @@ VPU::VPU(CPU* InCPU)
 
     FrameAddr       = 0xF000;
     CharMapAddr     = 0xF400;
-    BackgroundColor = 0x005B;
-    ForegroundColor = 0x0FFF;
+    BackgroundColor = 0x0000;
+    ForegroundColor = 0x0EEE;
     BorderColor     = BackgroundColor;
 }
 
@@ -117,8 +117,8 @@ void VPU::WriteRegister(U8 Reg, U8 Data)
     case RegBgColorHi:   BackgroundColor = (Data << 8) | (BackgroundColor & 0x00FF); break;
     case RegFgColorLo:   ForegroundColor = (ForegroundColor & 0xFF00) | Data; break;
     case RegFgColorHi:   ForegroundColor = (Data << 8) | (ForegroundColor & 0x00FF); break;
-    case RegFramePage:   FrameAddr = Data << 8;
-    case RegCharMapPage: CharMapAddr = Data << 8;
+    case RegFramePage:   FrameAddr = Data << 8; break;
+    case RegCharMapPage: CharMapAddr = Data << 8; break;
     }
 }
 

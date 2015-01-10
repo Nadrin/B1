@@ -10,8 +10,34 @@
 
 namespace {
     enum Registers {
-        RegKeyboard = 0x00,
+        RegKeyboardStatus = 0x00,
+        RegKeyboardData   = 0x01,
     };
+
+    const std::map<Sint32, U8> ShiftedSymbols = {
+        {SDLK_BACKQUOTE,   '~'},
+        {SDLK_1,           '!'},
+        {SDLK_2,           '@'},
+        {SDLK_3,           '#'},
+        {SDLK_4,           '$'},
+        {SDLK_5,           '%'},
+        {SDLK_6,           '^'},
+        {SDLK_7,           '&'},
+        {SDLK_8,           '*'},
+        {SDLK_9,           '('},
+        {SDLK_0,           ')'},
+        {SDLK_MINUS,       '_'},
+        {SDLK_EQUALS,      '+'},
+        {SDLK_LEFTBRACKET, '{'},
+        {SDLK_RIGHTBRACKET,'}'},
+        {SDLK_SEMICOLON,   ':'},
+        {SDLK_QUOTE,       '"'},
+        {SDLK_COMMA,       '<'},
+        {SDLK_PERIOD,      '>'},
+        {SDLK_SLASH,       '?'},
+        {SDLK_BACKSLASH,   '|'},
+    };
+
     const std::map<Sint32, U8> SpecialKeys = {
         {SDLK_LSHIFT,   0x01},
         {SDLK_RSHIFT,   0x02},
@@ -28,18 +54,18 @@ namespace {
         {SDLK_UP,    0x10},
         {SDLK_DOWN,  0x11},
 
-        {SDLK_F1,  0x41},
-        {SDLK_F2,  0x42},
-        {SDLK_F3,  0x43},
-        {SDLK_F4,  0x44},
-        {SDLK_F5,  0x45},
-        {SDLK_F6,  0x46},
-        {SDLK_F7,  0x47},
-        {SDLK_F8,  0x48},
-        {SDLK_F9,  0x49},
-        {SDLK_F10, 0x4A},
-        {SDLK_F11, 0x4B},
-        {SDLK_F12, 0x4C},
+        {SDLK_F1,  0x81},
+        {SDLK_F2,  0x82},
+        {SDLK_F3,  0x83},
+        {SDLK_F4,  0x84},
+        {SDLK_F5,  0x85},
+        {SDLK_F6,  0x86},
+        {SDLK_F7,  0x87},
+        {SDLK_F8,  0x88},
+        {SDLK_F9,  0x89},
+        {SDLK_F10, 0x8A},
+        {SDLK_F11, 0x8B},
+        {SDLK_F12, 0x8C},
 
         {SDLK_HOME,     0x50},
         {SDLK_END,      0x51},
@@ -47,52 +73,88 @@ namespace {
         {SDLK_PAGEDOWN, 0x53},
         {SDLK_INSERT,   0x7E},
     };
-    const U8 KeysMax = 8;
 }
 
 Keyboard::Keyboard(CPU* InCPU)
     : Device(InCPU)
+    , Data(0)
+    , Status(0)
 {
-    RAM.AllocRegister<Keyboard>(RegKeyboard, this, &Keyboard::ReadRegister, &Keyboard::WriteRegister);
+    RAM.AllocRegister<Keyboard>(RegKeyboardStatus, this, &Keyboard::ReadRegister, &Keyboard::WriteRegister);
+    RAM.AllocRegister<Keyboard>(RegKeyboardData,   this, &Keyboard::ReadRegister, &Keyboard::WriteRegister);
 }
 
 void Keyboard::TranslateEvent(SDL_KeyboardEvent Event)
 {
-    if(Buffer.size() >= KeysMax)
-        return;
+    const Sint32 KeyCode = Event.keysym.sym;
+    bool ShiftKeys       = Event.keysym.mod & (KMOD_SHIFT | KMOD_CAPS);
 
-    U8 Value;
-    if(Event.keysym.sym <= 0x7F) {
-        Value = Event.keysym.sym;
+    if(KeyCode <= 0x7F) {
+        if(KeyCode >= SDLK_a && KeyCode <= SDLK_z) {
+            Data = KeyCode;
+            if(ShiftKeys || (Status & 0x02))
+                Data &= 0xDF;
+        }
+        else {
+            Data = KeyCode;
+            if(ShiftKeys && (Status & 0x01)) {
+                auto KeyIt = ShiftedSymbols.find(KeyCode);
+                if(KeyIt != ShiftedSymbols.end())
+                    Data = KeyIt->second;
+            }
+        }
     }
     else {
-        auto KeyIt = SpecialKeys.find(Event.keysym.sym);
+        if((Status & 0x01) && (KeyCode == SDLK_LSHIFT || KeyCode == SDLK_RSHIFT))
+            return;
+
+        auto KeyIt = SpecialKeys.find(KeyCode);
         if(KeyIt == SpecialKeys.end())
             return;
-        Value = KeyIt->second;
+
+        Data = KeyIt->second;
     }
 
-    if(Event.state == SDL_RELEASED)
-        Value |= 0x80;
+    Status &= 0x03;
+    if(Event.state == SDL_PRESSED) {
+        Status |= 1<<6;
+    }
+    else {
+        Status |= 1<<7;
+    }
 
-    Buffer.push(Value);
+    if(ShiftKeys) {
+        Status |= 1<<5;
+    }
+    if(Event.keysym.mod & KMOD_ALT) {
+        Status |= 1<<4;
+    }
+    if(Event.keysym.mod & KMOD_CTRL) {
+        Status |= 1<<3;
+    }
+
     TheCPU.SignalInterrupt(CPU::INT_IRQ);
 }
 
 U8 Keyboard::ReadRegister(U8 Reg)
 {
-    U8 Value = 0;
-
-    if(Reg == RegKeyboard && Buffer.size() > 0) {
-        Value  = Buffer.front();
-        Buffer.pop();
+    U8 Result = 0;
+    switch(Reg) {
+    case RegKeyboardStatus:
+        Result = Status;
+        break;
+    case RegKeyboardData:
+        Result  = Data;
+        Status &= 0x03;
+        Data    = 0;
+        break;
     }
-    return Value;
+    return Result;
 }
 
 void Keyboard::WriteRegister(U8 Reg, U8 Data)
 {
-    // Not supported by this device.
-    UNUSED(Reg);
-    UNUSED(Data);
+    if(Reg == RegKeyboardStatus) {
+        Status = (Data & 0x03) | (Status & 0xFC);
+    }
 }
