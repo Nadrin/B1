@@ -1,0 +1,7 @@
+# QtCreator
+*.pro.user
+
+# ROM build files
+*.o
+*.bin
+*.map

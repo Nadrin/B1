@@ -8,6 +8,9 @@
 
 int main(int argc, char** argv)
 {
+    std::printf("BENDER-I Computer Emulator\n");
+    std::printf("(c) 2015 Michal Siejak <michal@siejak.pl>\n\n");
+
     if(SDL_Init(SDL_INIT_EVENTS) < 0) {
         std::fprintf(stderr, "Cannot initialize SDL!\n");
         return 1;

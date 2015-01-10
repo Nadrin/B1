@@ -2,14 +2,15 @@ Memory map
 ==========
 
 $0000 - $00F9	Free (Zero Page)
-$00FA - $00FF	Reserved for BIOS
+$00FA - $00FF	Reserved by BIOS
 $0100 - $01FF	CPU Stack
-$0200 - $EBFF	Free
+$0200 - $C3FF	Free
+$C400 - $EBFF	Monitor
 $EC00 - $EFFF	BIOS
 $F000 - $F3E8	Video RAM
 $F3E9 - $F3FF	Reserved
 $F400 - $FBFF	Video Character Map
-$FC00 - $FCFF	Reserved
+$FC00 - $FCFF	Free
 $FD00 - $FDFF	Memory Mapped I/O
 $FF00 - $FFF9	BIOS Jump Table
 $FFFA - $FFFF	Interrupt Vectors
@@ -17,17 +18,17 @@ $FFFA - $FFFF	Interrupt Vectors
 IO Registers
 ============
 
-$FD00	KBDCTL
-$FD01	KBDDAT
-$FD02	SCANLN
-$FD03	RASINT
-$FD04	BRCOLL
-$FD05	BRCOLH
-$FD06	BGCOLL
-$FD07	BGCOLH
-$FD08	FGCOLL
-$FD09	FGCOLH
-$FD0A	FRMPAG
-$FD0B	MAPPAG
-$FD0C	AUDCTL
-$FD0D	AUDFRQ
+$FD00	KBDCTL	Keyboard status & control
+$FD01	KBDDAT	Keyboard data (read only)
+$FD02	SCANLN	Current video scanline (read only)
+$FD03	RASINT	Raster interrupt scanline
+$FD04	BRCOLL	Border color (low-byte)
+$FD05	BRCOLH	Border color (high-byte)
+$FD06	BGCOLL	Background color (low-byte)
+$FD07	BGCOLH	Background color (high-byte)
+$FD08	FGCOLL	Foreground color (low-byte)
+$FD09	FGCOLH	Foreground color (high-byte)
+$FD0A	FRMPAG	Video frame page address
+$FD0B	MAPPAG	Video character map page address
+$FD0C	AUDCTL	Audio control
+$FD0D	AUDFRQ	Audio frequency

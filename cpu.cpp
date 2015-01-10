@@ -25,6 +25,10 @@ CPU::CPU(const U32 InFreq, const U16 InHz, const char* Program, U16 Offset, size
     CyclesPerJiffy   = (1000/VideoHz * Frequency) / 1000;
     CyclesSinceSleep = 0;
     LastSleepTicks   = SDL_GetTicks();
+
+    std::printf("CPU is 6502 compatible running at %d cycles per second\n", Frequency);
+    std::printf("Target video refresh rate is %dHz, jiffy is %d cycles\n", VideoHz, CyclesPerJiffy);
+    std::printf("Loaded ROM file at address $%04x (%lu bytes)\n", Offset, Size);
 }
 
 void CPU::Tick()

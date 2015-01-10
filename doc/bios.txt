@@ -1,13 +1,13 @@
 BIOS functions
 ==============
 
-$FF00	INIT
-$FF03	GETCHR
-$FF06	PUTCHR
-$FF09	SCROLL
-$FF0C	SETCOL
-$FF0F	SETROW
-$FF12	SETCUR
-$FF15	CLRSCR
-$FF18	WAIT
-$FF1B	BEEP
+$FF00	INIT	(Re)Initialize system
+$FF03	GETCHR	Get character
+$FF06	PUTCHR	Put character
+$FF09	SCROLL	Scroll screen
+$FF0C	SETCOL	Set column
+$FF0F	SETROW	Set row
+$FF12	SETCUR	Set cursor character
+$FF15	CLRSCR	Clear screen
+$FF18	WAIT	Wait/Sleep
+$FF1B	BEEP	Make beep sound
