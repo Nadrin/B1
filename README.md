@@ -2,5 +2,5 @@
 
 (c) Copyright 2015 Michał Siejak
 
-![Bender](../blob/master/doc/bender.jpg?raw=true)
+![Bender](https://raw.githubusercontent.com/Nadrin/B1/master/doc/bender.jpg)
 
