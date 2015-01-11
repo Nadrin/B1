@@ -83,8 +83,8 @@ BV       JMP      BREAK             ; Begin break routine
 ;
 ; Some codes
 ;
-BSC      .byte $5f                   ; Backspace code
-LSC      .byte $18                   ; Line cancel code
+BSC      .byte $08                   ; Backspace code
+LSC      .byte $1B                   ; Line cancel code
 PCC      .byte $80                   ; Pad character control
 TMC      .byte $00                   ; Tape mode control
 SSS      .byte $04                   ; Spare Stack size. (was $04 but documentation suggests $20)
@@ -1256,8 +1256,6 @@ EXSM     rts                        ; Return
 ; Get a character from the keyboard
 ;
 RCCHR    jsr $FF03                  ; Get character
-         cmp #$1B                   ; Skip ESC
-	 beq RCCHR
 	 cmp #$8C                   ; Reset on F12
 	 beq RESET
          jsr $FF06                  ; Echo
@@ -1269,6 +1267,8 @@ RCCHR    jsr $FF03                  ; Get character
 SNDCHR   cmp #$FF                  ; Discard unwanted chars
 	 beq EXSC
 	 cmp #$00
+	 beq EXSC
+	 cmp #$1B
 	 beq EXSC
 	 cmp #$91
 	 beq EXSC
