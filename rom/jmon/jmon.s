@@ -133,7 +133,7 @@
   BPA	  = $40			; Address of breakpoint (2 bytes * 4 breakpoints)
   
 ; External Routines
-  BASIC	    = $E000		; BASIC
+  BASIC	    = $BA00		; BASIC
   BRKVECTOR = $FFFE		; Break/interrupt vector (2 bytes)
 
   .segment "JMON"
@@ -2002,10 +2002,10 @@ BASICPresent:
 	CMP #$4C		; Should contain $4C
 	BNE @NoBasic
 	LDA BASIC+1		; Second firmware byte
-	CMP #$B0		; Should contain $B0
+	CMP #$D9		; Should contain $D9
 	BNE @NoBasic
 	LDA BASIC+2		; Third firmware byte
-	CMP #$E2		; Should contain $E2
+	CMP #$C2		; Should contain $C2
 	BNE @NoBasic
 	LDA #1
 	RTS

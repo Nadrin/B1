@@ -4,7 +4,8 @@ Memory map
 $0000 - $00F9	Free (Zero Page)
 $00FA - $00FF	Reserved by BIOS
 $0100 - $01FF	CPU Stack
-$0200 - $C3FF	Free
+$0200 - $B9FF	Free
+$BA00 - $C3FF	BASIC
 $C400 - $EBFF	Monitor
 $EC00 - $EFFF	BIOS
 $F000 - $F3E8	Video RAM

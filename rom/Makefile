@@ -1,7 +1,7 @@
 .PHONY: clean
 
-rom.bin: font.o bios.o jmon.o demo.o
-	ld65 -vm -m rom.map -C layout.cfg -o rom.bin font.o bios.o jmon.o demo.o
+rom.bin: font.o bios.o jmon.o demo.o basic.o
+	ld65 -vm -m rom.map -C layout.cfg -o rom.bin font.o bios.o jmon.o demo.o basic.o
 
 font.o: font/font.s
 	ca65 font/font.s -o font.o
@@ -14,6 +14,9 @@ jmon.o:	jmon/jmon.s jmon/disasm.s jmon/miniasm.s jmon/trace.s jmon/info.s jmon/m
 
 demo.o: demo/demo.s
 	ca65 demo/demo.s -o demo.o
+
+basic.o: basic/basic.s
+	ca65 --feature labels_without_colons -o basic.o basic/basic.s
 
 clean:
 	$(RM) *.o *.bin *.map

@@ -3,14 +3,14 @@
 ; Licensed under MIT opensource license
 
 	.segment "DEMO"
-	.org $C200
+	.org $B000
 
 ; Constants
 	BARWIDTH = 32		; Width of the raster bar
 	BARTOP   = 32		; Maximum top position
 	BARBOT   = 168		; Maximum bottom position
-	FRAMEPAG = $B0		; Frame page address
-	TEXTPTR  = $B1B8	; Text pointer (determines position on screen)
+	FRAMEPAG = $B4		; Frame page address
+	TEXTPTR  = $B5B8	; Text pointer (determines position on screen)
 	TEXTOFF  = 3		; Text horizontal offset
 	FGCOLOR  = $04F4	; Foreground color
 
