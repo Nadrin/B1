@@ -11,7 +11,7 @@ MCC::MCC()
 {
     using namespace std::placeholders;
 
-    std::memset(Buffer, 0, sizeof(Buffer));
+    std::memset(Memory, 0, sizeof(Memory));
     ReadCallback.fill(std::bind(&MCC::PassthroughRegisterRead, this, _1));
     WriteCallback.fill(std::bind(&MCC::PassthroughRegisterWrite, this, _1, _2));
 }
@@ -28,10 +28,10 @@ void MCC::WriteRegister(const U8 Reg, const U8 Value)
 
 U8 MCC::PassthroughRegisterRead(U8 Reg)
 {
-    return Buffer[0xFD00 + Reg];
+    return Memory[0xFD00 + Reg];
 }
 
 void MCC::PassthroughRegisterWrite(U8 Reg, U8 Data)
 {
-    Buffer[0xFD00 + Reg] = Data;
+    Memory[0xFD00 + Reg] = Data;
 }

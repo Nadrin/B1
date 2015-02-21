@@ -20,7 +20,7 @@ CPU::CPU(const U32 InFreq, const U16 InHz, const char* Program, U16 Offset, size
 {
     SDL_InitSubSystem(SDL_INIT_TIMER);
     FlagRegister() = 0;
-    std::memcpy(&RAM.Buffer[Offset], Program, Size);
+    std::memcpy(&RAM.Memory[Offset], Program, Size);
 
     CyclesPerJiffy   = (1000/VideoHz * Frequency) / 1000;
     CyclesSinceSleep = 0;

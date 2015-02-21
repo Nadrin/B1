@@ -21,14 +21,14 @@ public:
         if((Addr >> 8) == 0xFD)
             return ReadRegister(Addr & 0xFF);
         else
-            return Buffer[Addr];
+            return Memory[Addr];
     }
     inline void Write(const U16 Addr, const U8 Value)
     {
         if((Addr >> 8) == 0xFD)
             WriteRegister(Addr & 0xFF, Value);
         else
-            Buffer[Addr] = Value;
+            Memory[Addr] = Value;
     }
     inline U8 operator[](const U16 Addr) { return Read(Addr); }
 
@@ -44,11 +44,11 @@ public:
     }
 
     // 64kB address space
-    U8 Buffer[MEMSIZE];
+    U8 Memory[MEMSIZE];
 
     // Memory-mapped IO callbacks
-    std::array<std::function<U8(U8)>, 255>      ReadCallback;
-    std::array<std::function<void(U8,U8)>, 255> WriteCallback;
+    std::array<std::function<U8(U8)>, 256>      ReadCallback;
+    std::array<std::function<void(U8,U8)>, 256> WriteCallback;
 private:
     U8   PassthroughRegisterRead(U8 Reg);
     void PassthroughRegisterWrite(U8 Reg, U8 Data);
