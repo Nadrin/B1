@@ -1,0 +1,176 @@
+\documentclass[a4paper,10pt,oneside]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{tabularx}
+\usepackage{caption}
+\usepackage{siunitx}
+\usepackage{amsmath}
+\usepackage{parskip}
+\usepackage{hyperref}
+\hypersetup{
+  colorlinks,
+  linkcolor=black,
+  urlcolor=blue}
+
+\begin{document}
+\title{BENDER-I Computer System}
+\author{Michał Siejak}
+\date{}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Introduction}
+BENDER-I (or B1 for short) is a fictional computer system I've created for fun and profit (well, maybe only for fun). The name is, of course, a tribute to \href{http://en.wikipedia.org/wiki/Bender_(Futurama)}{Bender Bending Rodríguez}, a fictional character in the animated series Futurama, who happens to be powered by \href{https://www.google.com/webhp?hl=en#hl=en&q=bender+6502}{the same CPU} as B1 computer. 
+
+Currently there are no hardware implementations of the B1 computer. The reference, and only, implementation is the B1 Emulator.
+
+For source code, emulator binaries and documentation related to B1 visit: \url{https://github.com/Nadrin/B1}.
+
+\section{The Hardware}
+The complete B1 system consists of a CPU, a memory control chip, a keyboard controller and video \& sound co-processors.
+
+\subsection{Central Processing Unit}
+At the heart of B1 lies the venerable MOS Technology 6502 microprocessor. It is a little-endian 8-bit processor with a 16-bit address bus. The default clock speed, as implemented in the emulator, is approximately 1 MHz.
+
+The 6502 has one 8-bit accumulator (\texttt{A}), two 8-bit index registers (\texttt{X} and \texttt{Y}), an 8-bit stack pointer (\texttt{SP}), a 16-bit program counter (\texttt{PC}) and an 8-bit processor status register (used for flags, not directly accessable).
+
+The CPU has access to a single bank of 64 kB of RAM through the memory control chip (MCC). The MCC takes care of addressing the RAM and communication with other devices via memory-mapped IO. Due to design simplification there is no bank switching and ROM is not mapped to any address space, instead it is loaded into RAM on power-on before the CPU starts executing any code.
+
+16-bit address space is divided into pages each 256-bytes long. The zero page (\texttt{\$0000-\$00FF}) is especially useful since it takes one cycle less to access and can be used with more addressing modes. The CPU stack always lies within the first page (\texttt{\$0100-\$01FF}) and grows upwards. MMIO registers always lie within the \texttt{\$FD00-\$FDFF} memory page.
+
+The are three hardcoded interrupt vectors: RESET (\texttt{\$FFFC}), NMI (\texttt{\$FFFA}) and IRQ/BRK (\texttt{\$FFFE}). On power-on the CPU jumps to the value of the RESET vector and starts executing code.
+
+For the list of 6502 opcodes see: \url{http://www.6502.org/tutorials/6502opcodes.html}.
+
+For information about 6502 addressing modes: \url{http://www.obelisk.demon.co.uk/6502/addressing.html}.
+
+\subsection{Memory map}
+In default configuration a running B1 system leaves 47,610 bytes of memory free to use by any program, including 250 bytes in the zero page.
+
+BASIC, System Monitor and BIOS address ranges can be overwritten if your program does not make use of any one of them increasing amount of available memory to a maximum of 61,712 bytes. \vspace{5pt}
+
+\begin{center}
+  \begin{tabularx}{\textwidth}{ l | X }
+    \textbf{Address range} & \textbf{Description} \\ \hline
+    \texttt{\$0000} --- \texttt{\$00F9} & Free (Zero Page) \\
+    \texttt{\$00FA} --- \texttt{\$00FF} & Reserved by BIOS \\
+    \texttt{\$0100} --- \texttt{\$01FF} & CPU Stack \\
+    \texttt{\$0200} --- \texttt{\$B9FF} & Free \\
+    \texttt{\$BA00} --- \texttt{\$C3FF} & BASIC \\
+    \texttt{\$C400} --- \texttt{\$EBFF} & System Monitor \\
+    \texttt{\$EC00} --- \texttt{\$EFFF} & BIOS \\
+    \texttt{\$F000} --- \texttt{\$F3FF} & Video Framebuffer \\
+    \texttt{\$F400} --- \texttt{\$FBFF} & Video Character Map (glyph bitmaps) \\
+    \texttt{\$FC00} --- \texttt{\$FCFF} & Free \\
+    \texttt{\$FD00} --- \texttt{\$FDFF} & Memory Mapped I/O \\
+    \texttt{\$FF00} --- \texttt{\$FFF9} & BIOS Functions (jump table) \\
+    \texttt{\$FFFA} --- \texttt{\$FFFF} & Interrupt Vectors \\
+  \end{tabularx}
+  \captionof{table}{Memory Map}
+\end{center}
+
+\subsection{Keyboard Controller}
+The keyboard controller provides character input using a standard US keyboard layout without numeric keypad. Keyboard events (key press or release) generate an IRQ. To receive keyboard input one can either react to the said IRQ with custom ISR or just actively poll the \texttt{KBDCTL} register.
+
+\subsubsection*{MMIO Registers}
+\begin{tabularx}{\textwidth}{l | l | l | X }
+  \textbf{Name} & \textbf{Address} & \textbf{Access} & \textbf{Description} \\ \hline
+  \texttt{KBDCTL} & \texttt{\$FD00} & \texttt{RO/RW} &
+  Keyboard status \& control. Bits 3-7 are read-only status flags. Bits 0-1 are read-write control flags. \\ \hline
+  \texttt{KBDDAT} & \texttt{\$FD01} & \texttt{RO} &
+  Keyboard data. Contains actual character code. This is a latch register; reading from it resets \texttt{KBDCTL} as if no keyboard event occured. \\
+\end{tabularx}
+\captionof{table}{Keyboard controller registers}
+
+\subsubsection*{Format of \texttt{KBDCTL} register}
+\begin{tabularx}{\textwidth}{l l}
+  Bit 7: & Set if a key was just released (read-only). \\
+  Bit 6: & Set if a key was just pressed (read-only). \\
+  Bit 5: & Set if a shift or caps-lock key is currently pressed (read-only). \\
+  Bit 4: & Set if an alt key is currently pressed (read-only). \\
+  Bit 3: & Set if any control key is currently pressed (read-only).  \\
+  Bit 2: & Reserved. Always zero. \\
+  Bit 1: & Enables automatic conversion to upper-case.  \\
+  Bit 0: & Enables automatic shifting of characters when shift or caps-lock keys are pressed. \\
+\end{tabularx}
+\captionof{table}{Keyboard status \& control}
+
+\subsection{Video Processing Unit}
+The Video Processing Unit (VPU) generates a 352x232 raster video output with a standard PAL refresh rate of 50 Hz. Overscan borders are 16 pixels thick yielding an effective, usable resolution of 320x200 pixels.
+
+The VPU provides a text-mode display with 40 columns and 25 rows. The default character map, as provided in stock ROM file, is based on \href{http://en.wikipedia.org/wiki/Code_page_437}{IBM Code Page 437}.
+
+\subsubsection*{Memory}
+The VPU does not have any dedicated memory and uses system RAM for framebuffer and character glyph data (character map). Both have to be aligned to page boundary.
+
+The framebuffer is a simple look-up table into the character map, one byte per character. By default it starts at address \texttt{\$F000} and occupies 1,000 bytes of memory.
+
+The character map is an array of 256 consecutive glyphs. Each glyph is an 8x8 bitmap, one byte per line from top to bottom, yielding a total of 8 bytes per glyph. Each byte represents a horizontal line, one bit per pixel, with MSB encoding the leftmost pixel. The character map, by default, starts at address \texttt{\$F400} and occupies 2,048 bytes of memory.
+
+\subsubsection*{Color Palette}
+The VPU can display up to 3 different colors per video scanline: foreground color, background color and border color. Colors are represented as 12-bit numbers with RGB components encoded in 4-bits each, thus allowing for a palette of 4,096 possible colors. Colors are usually stored in 2 bytes as \texttt{\$0R} \texttt{\$GB}.
+
+\subsubsection*{Timing \& Vertical Blanking}
+For a 1 Mhz CPU the VPU draws one video scanline every 78 cycles. The vertical blanking period (VBLANK) takes place during scanlines 232-255 and lasts for 1,872 cycles. No picture is generated during this time.
+
+\subsubsection*{Raster Interrupt}
+Raster interrupt is an NMI signaled by the VPU once certain video scanline has been reached. It's only signaled for visible screen area. Setting raster interrupt in the vertical blanking period effectively disables it.
+
+\subsubsection*{MMIO Registers}
+\begin{tabularx}{\textwidth}{l | l | l | X }
+  \textbf{Name} & \textbf{Address} & \textbf{Access} & \textbf{Description} \\ \hline
+  \texttt{SCANLN} & \texttt{\$FD02} & \texttt{RO} &
+  Current video scanline being drawn. Also includes the vertical blanking period. \\ \hline
+  \texttt{RASINT} & \texttt{\$FD03} & \texttt{RW} &
+  Raster interrupt scanline number. \\ \hline
+  \texttt{BRCOLL} & \texttt{\$FD04} & \texttt{RW} &
+  Border color low-byte. \\ \hline
+  \texttt{BRCOLH} & \texttt{\$FD05} & \texttt{RW} &
+  Border color high-byte. \\ \hline
+  \texttt{BGCOLL} & \texttt{\$FD06} & \texttt{RW} &
+  Background color low-byte. \\ \hline
+  \texttt{BGCOLH} & \texttt{\$FD07} & \texttt{RW} &
+  Background color high-byte. \\ \hline
+  \texttt{FGCOLL} & \texttt{\$FD08} & \texttt{RW} &
+  Foreground color low-byte. \\ \hline
+  \texttt{FGCOLH} & \texttt{\$FD09} & \texttt{RW} &
+  Foreground color high-byte. \\ \hline
+  \texttt{FRMPAG} & \texttt{\$FD0A} & \texttt{RW} &
+  Framebuffer address (page number). \\ \hline
+  \texttt{MAPPAG} & \texttt{\$FD0B} & \texttt{RW} &
+  Character map address (page number). \\
+\end{tabularx}
+\captionof{table}{VPU registers}
+
+\subsection{Sound Processing Unit}
+The Sound Processing Unit (SPU) is a simple tone generator. It outputs a single 8 kHz, 8-bit PCM sound channel. For a 1 Mhz CPU a sample is emitted once every 125 cycles.
+
+The SPU is able to generate three different waveforms: flat (no sound), square wave and sine wave, with 16 volume levels.
+
+Available frequencies correspond to the first 64 piano keys tuned to the A440 pitch standard. For note index $n$ set in the \texttt{AUDFRQ} register the emitted wave frequency $f(n)$ is given by
+\begin{equation*}
+  f(n) = 2^{\frac{n-48}{12}} \times \SI{440}{\hertz}.
+\end{equation*}
+
+\subsubsection*{MMIO Registers}
+\begin{tabularx}{\textwidth}{l | l | l | X }
+  \textbf{Name} & \textbf{Address} & \textbf{Access} & \textbf{Description} \\ \hline
+  \texttt{AUDCTL} & \texttt{\$FD0C} & \texttt{RW} &
+  Audio Control. High nibble encodes selected waveform (0-2), low nibble encodes selected volume level (0-16). \\ \hline
+  \texttt{AUDFRQ} & \texttt{\$FD0D} & \texttt{RW} &
+  Audio Frequency. Note index in the A440 pitch standard (0-63). \\
+\end{tabularx}
+\captionof{table}{SPU registers}
+
+\section{The Software}
+\subsection{BIOS}
+\subsection{Monitor}
+\subsection{Tiny BASIC}
+\subsection{Demo Program}
+
+\section{The Emulator}
+\subsection{Building}
+\subsection{Running}
+
+\end{document}
