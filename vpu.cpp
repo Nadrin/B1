@@ -48,7 +48,7 @@ VPU::VPU(CPU* InCPU)
         RAM.AllocRegister<VPU>(Reg, this, &VPU::ReadRegister, &VPU::WriteRegister);
     }
 
-    CyclesPerTick    = TheCPU.Frequency / (UpdateHz * Height);
+    CyclesPerTick    = TheCPU.Frequency / (UpdateHz * MAXSCAN);
     CharsPerScanline = FrameW/8;
 
     FrameAddr       = 0xF000;
@@ -86,7 +86,7 @@ void VPU::Tick(const U32 DeltaCycles)
             SDL_RenderPresent(Renderer);
         }
 
-        Scanline++;
+        Scanline = (Scanline+1) % MAXSCAN;
     }
 }
 
