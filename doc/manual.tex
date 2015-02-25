@@ -1,6 +1,7 @@
 \documentclass[a4paper,10pt,oneside]{article}
 \usepackage[utf8]{inputenc}
 \usepackage{tabularx}
+\usepackage{ltablex}
 \usepackage{caption}
 \usepackage{siunitx}
 \usepackage{amsmath}
@@ -66,8 +67,8 @@ BASIC, System Monitor and BIOS address ranges can be overwritten if your program
     \texttt{\$FD00} --- \texttt{\$FDFF} & Memory Mapped I/O \\
     \texttt{\$FF00} --- \texttt{\$FFF9} & BIOS Functions (jump table) \\
     \texttt{\$FFFA} --- \texttt{\$FFFF} & Interrupt Vectors \\
+    \caption{Memory map}
   \end{tabularx}
-  \captionof{table}{Memory Map}
 \end{center}
 
 \subsection{Keyboard Controller}
@@ -80,8 +81,8 @@ The keyboard controller provides character input using a standard US keyboard la
   Keyboard status \& control. Bits 3-7 are read-only status flags. Bits 0-1 are read-write control flags. \\ \hline
   \texttt{KBDDAT} & \texttt{\$FD01} & \texttt{RO} &
   Keyboard data. Contains actual character code. This is a latch register; reading from it resets \texttt{KBDCTL} as if no keyboard event occured. \\
+  \caption{Keyboard controller registers}
 \end{tabularx}
-\captionof{table}{Keyboard controller registers}
 
 \subsubsection*{Format of \texttt{KBDCTL} register}
 \begin{tabularx}{\textwidth}{l l}
@@ -92,9 +93,9 @@ The keyboard controller provides character input using a standard US keyboard la
   Bit 3: & Set if any control key is currently pressed (read-only).  \\
   Bit 2: & Reserved. Always zero. \\
   Bit 1: & Enables automatic conversion to upper-case.  \\
-  Bit 0: & Enables automatic shifting of characters when shift or caps-lock keys are pressed. \\
+  Bit 0: & Enables automatic shifting of characters when shift/caps-lock is pressed. \\
+  \caption{Keyboard status \& control}
 \end{tabularx}
-\captionof{table}{Keyboard status \& control}
 
 \subsection{Video Processing Unit}
 The Video Processing Unit (VPU) generates a 352x232 raster video output with a standard PAL refresh rate of 50 Hz. Overscan borders are 16 pixels thick yielding an effective, usable resolution of 320x200 pixels.
@@ -115,7 +116,7 @@ The VPU can display up to 3 different colors per video scanline: foreground colo
 For a 1 Mhz CPU the VPU draws one video scanline every 78 cycles. The vertical blanking period (VBLANK) takes place during scanlines 232-255 and lasts for 1,872 cycles. No picture is generated during this time.
 
 \subsubsection*{Raster Interrupt}
-Raster interrupt is an NMI signaled by the VPU once certain video scanline has been reached. It's only signaled for visible screen area. Setting raster interrupt in the vertical blanking period effectively disables it.
+Raster interrupt is an NMI signaled by the VPU once certain video scanline has been reached. It's only signaled for visible screen area. Setting raster interrupt anywhere in the vertical blanking period effectively disables it.
 
 \subsubsection*{MMIO Registers}
 \begin{tabularx}{\textwidth}{l | l | l | X }
@@ -140,8 +141,8 @@ Raster interrupt is an NMI signaled by the VPU once certain video scanline has b
   Framebuffer address (page number). \\ \hline
   \texttt{MAPPAG} & \texttt{\$FD0B} & \texttt{RW} &
   Character map address (page number). \\
+  \caption{VPU registers}
 \end{tabularx}
-\captionof{table}{VPU registers}
 
 \subsection{Sound Processing Unit}
 The Sound Processing Unit (SPU) is a simple tone generator. It outputs a single 8 kHz, 8-bit PCM sound channel. For a 1 Mhz CPU a sample is emitted once every 125 cycles.
@@ -153,6 +154,7 @@ Available frequencies correspond to the first 64 piano keys tuned to the A440 pi
   f(n) = 2^{\frac{n-48}{12}} \times \SI{440}{\hertz}.
 \end{equation*}
 
+\newpage
 \subsubsection*{MMIO Registers}
 \begin{tabularx}{\textwidth}{l | l | l | X }
   \textbf{Name} & \textbf{Address} & \textbf{Access} & \textbf{Description} \\ \hline
@@ -160,14 +162,101 @@ Available frequencies correspond to the first 64 piano keys tuned to the A440 pi
   Audio Control. High nibble encodes selected waveform (0-2), low nibble encodes selected volume level (0-16). \\ \hline
   \texttt{AUDFRQ} & \texttt{\$FD0D} & \texttt{RW} &
   Audio Frequency. Note index in the A440 pitch standard (0-63). \\
+  \caption{SPU registers}
 \end{tabularx}
-\captionof{table}{SPU registers}
 
 \section{The Software}
+This section provides a quick overview of software available in the stock B1 ROM.
+
 \subsection{BIOS}
-\subsection{Monitor}
+The B1 BIOS, as the name suggests, handles basic input/output operations --- mainly system initialization and terminal emulation. It's main purpose is to bring the system to a known state after reset and provide a thin layer of abstraction over hardware for applications.
+
+\subsubsection*{Early Startup}
+The RESET vector points at BIOS startup code which initializes CPU stack, calls the \texttt{INIT} function and then jumps to System Monitor.
+
+\subsubsection*{Default ISRs}
+The BIOS uses a NMI service routine and VPU raster interrupt to implement a rudimentary timer for \texttt{WAIT} and \texttt{BEEP} functions. Do not modify the NMI vector if you intend to use these functions.
+
+\subsubsection*{Call Interface}
+BIOS functions can be accessed by a jump table located at \texttt{\$FF00}. Each entry is an absolute \texttt{JMP} instruction and takes 3 bytes. To call a function simply do a \texttt{JSR} to a table entry, for example: \texttt{JSR \$FF03}.
+
+\newpage
+\subsubsection*{Function Reference}
+\begin{tabularx}{\textwidth}{l | l | X }
+  \textbf{Name} & \textbf{Address} & \textbf{Description} \\ \hline
+  
+  \texttt{INIT} & \texttt{\$FF00} & 
+  (Re)Initialize system. 
+  \newline Initializes the system to a known state after reset.
+  \newline \textbf{Arguments:} None.
+  \newline \textbf{Modifies:} A, X, Y.  \\ \hline
+
+  \texttt{GETCHR} & \texttt{\$FF03} &
+  Get character. Waits for keyboard input.
+  \newline \textbf{Arguments:} None.
+  \newline \textbf{Modifies:} Character in A. \\ \hline
+
+  \texttt{PUTCHR} & \texttt{\$FF06} &
+  Put character. Prints a character on the screen.
+  \newline \textbf{Arguments:} Character in A.
+  \newline \textbf{Modifies:} None. \\ \hline
+
+  \texttt{SCROLL} & \texttt{\$FF09} &
+  Scroll the screen by one line (vertically).
+  \newline \textbf{Arguments:} None.
+  \newline \textbf{Modifies:} None. \\ \hline
+
+  \texttt{SETCOL} & \texttt{\$FF0C} &
+  Set current column.
+  \newline \textbf{Arguments:} Column number in Y.
+  \newline \textbf{Modifies:} Carry set on error (invalid value). \\ \hline
+
+  \texttt{SETROW} & \texttt{\$FF0F} &
+  Set current row.
+  \newline \textbf{Arguments:} Row number in X.
+  \newline \textbf{Modifies:} Carry set on error (invalid value). \\ \hline
+
+  \texttt{SETCUR} & \texttt{\$FF12} &
+  Set cursor character.
+  \newline \textbf{Arguments:} New cursor character in A.
+  \newline \textbf{Modifies:} None. \\ \hline
+
+  \texttt{CLRSCR} & \texttt{\$FF15} &
+  Clear the screen.
+  \newline \textbf{Arguments:} None.
+  \newline \textbf{Modifies:} None. \\ \hline
+
+  \texttt{WAIT} & \texttt{\$FF18} &
+  Delay execution for a specified number of VPU frames.
+  \newline Maximum delay is 255 frames or 5.1 seconds on an 50Hz PAL display.
+  \newline \textbf{Arguments:} Delay in frames in A.
+  \newline \textbf{Modifies:} None. \\ \hline
+
+  \texttt{BEEP} & \texttt{\$FF1B} &
+  Delay execution and make a beep sound.
+  \newline Maximum delay is 255 frames or 5.1 seconds on an 50Hz PAL display.
+  \newline \textbf{Arguments:} Delay in frames in A, beep note in X.
+  \newline \textbf{Modifies:} Carry set on error (invalid note index). \\
+
+  \caption{BIOS functions}
+\end{tabularx}
+
+\subsection{System Monitor}
+The BENDER-I System Monitor is the operating system of the B1 computer. It's based on the excellent JMON --- a machine language monitor program, originally for the Apple Replica 1, by Jeff Tranter.
+
+For command reference \& more information visit: \url{https://github.com/Nadrin/B1/tree/master/rom/jmon}.
+
+\subsubsection*{Known Bugs}
+\begin{itemize}
+  \item \texttt{BREAKPOINT} command is currently disabled and does not work.
+  \item The CPU is incorrectly detected as an 65C02 when displaying system information.
+\end{itemize}
+
 \subsection{Tiny BASIC}
+The B1 System Monitor includes a \href{http://en.wikipedia.org/wiki/Tiny_BASIC}{Tiny BASIC} interpreter by Tom Pitman. To enter BASIC environment press \texttt{I} while at the monitor prompt.
+
 \subsection{Demo Program}
+A demo program showcasing graphics \& sound capabilities of a B1 system is included in the stock ROM. To run it press \texttt{G} while at the monitor prompt and jump to address \texttt{\$B000}.
 
 \section{The Emulator}
 \subsection{Building}
