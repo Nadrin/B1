@@ -15,24 +15,22 @@ int main(int argc, char** argv)
         std::fprintf(stderr, "Cannot initialize SDL!\n");
         return 1;
     }
-	if(argc < 2) {
-        std::fprintf(stderr, "Usage: %s <romfile>\n", argv[0]);
-        return 2;
-	}
 
     CPU* TheCPU;
     {
-        std::ifstream RomFile(argv[1], std::ios::binary);
+        const char* RomFileName = argc >= 2 ? argv[1] : "rom.bin";
+
+        std::ifstream RomFile(RomFileName, std::ios::binary);
         if(!RomFile) {
-            std::fprintf(stderr, "Could not open rom file: %s\n", argv[1]);
-            return 3;
+            std::fprintf(stderr, "Could not open rom file: %s\n", RomFileName);
+            return 2;
         }
 
         char Buffer[MEMSIZE];
         RomFile.read(Buffer, MEMSIZE);
         if(!RomFile) {
-            std::fprintf(stderr, "Invalid rom file: %s\n", argv[1]);
-            return 4;
+            std::fprintf(stderr, "Invalid rom file: %s\n", RomFileName);
+            return 3;
         }
 
         TheCPU = new CPU(CPUFREQ, VIDEOHZ, Buffer, 0, sizeof(Buffer));
@@ -60,5 +58,5 @@ int main(int argc, char** argv)
 
     delete TheCPU;
     SDL_Quit();
-	return 0;
+    return 0;
 }

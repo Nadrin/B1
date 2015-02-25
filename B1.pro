@@ -3,8 +3,22 @@ CONFIG += console
 CONFIG -= app_bundle
 CONFIG -= qt
 
-QMAKE_CXXFLAGS += -std=c++11
-LIBS += -lSDL2
+unix {
+    QMAKE_CXXFLAGS += -std=c++11
+    LIBS += -lSDL2
+}
+
+win32 {
+    win32-msvc*:contains(QMAKE_HOST.arch, x86_64):{
+        LIBS += -L"$$PWD/winsdk/lib64/"
+    } else {
+        LIBS += -L"$$PWD/winsdk/lib32/"
+    }
+
+    DEFINES += SDL_MAIN_HANDLED
+    INCLUDEPATH += "$$PWD/winsdk/include/"
+    LIBS += -lSDL2
+}
 
 SOURCES += main.cpp \
     cpu.cpp \

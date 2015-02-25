@@ -5,3 +5,6 @@
 *.o
 *.bin
 *.map
+
+# WinSDK
+winsdk/**
