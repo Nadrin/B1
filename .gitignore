@@ -1,5 +1,6 @@
 # QtCreator
 *.pro.user
+Makefile
 
 # ROM build files
 *.o

@@ -6,6 +6,11 @@
 \usepackage{siunitx}
 \usepackage{amsmath}
 \usepackage{parskip}
+\usepackage{listings}
+\lstset{
+  basicstyle=\ttfamily,
+  numbers=left,
+  captionpos=b}
 \usepackage{hyperref}
 \hypersetup{
   colorlinks,
@@ -256,10 +261,118 @@ For command reference \& more information visit: \url{https://github.com/Nadrin/
 The B1 System Monitor includes a \href{http://en.wikipedia.org/wiki/Tiny_BASIC}{Tiny BASIC} interpreter by Tom Pitman. To enter BASIC environment press \texttt{I} while at the monitor prompt.
 
 \subsection{Demo Program}
-A demo program showcasing graphics \& sound capabilities of a B1 system is included in the stock ROM. To run it press \texttt{G} while at the monitor prompt and jump to address \texttt{\$B000}.
+A demo program showcasing graphics \& sound capabilities of a B1 system is included in the stock ROM. To run it press \texttt{G} while at the monitor prompt and jump to address \texttt{\$B000}. To exit press \texttt{<ESC>}.
 
 \section{The Emulator}
-\subsection{Building}
+The B1 Emulator is the reference implementation of B1 Computer. It's written in C++ using SDL2 library and runs on Unix-like systems (including Linux) and Windows.
+
+Keep in mind that this is an educational project and, in fact, the very first emulator I've ever implemented. While it is, more or less, correct the 6502 emulation core is quite slow.
+
+The emulated B1 display renders picture at double resolution for readability on nowadays high resolution screens.
+
+\subsubsection*{Known Bugs}
+\begin{itemize}
+  \item 6502 cycle timing is not correct (for simplicity). I assumed 1 CPU cycle for opcode decode/execution and an additional 1 CPU cycle for every byte of RAM accessed.
+  \item	Undocumented 6502 opcodes are not emulated. Invalid opcodes are treated like \texttt{NOP}s.
+  \item There is no +1 cycle penalty for crossing page boundary.
+\end{itemize}
+
+\subsection{Installing}
+\label{sec:installing}
+The emulator depends on \href{https://www.libsdl.org/download-2.0.php}{SDL2} and qmake. For building your own ROMs you will need \href{http://cc65.github.io/cc65/}{cc65 Compiler Suite}.
+
+\subsubsection*{Linux}
+\begin{enumerate}
+  \item Install pre-requisities: GNU C++ compiler, GNU make, git, any version of qmake and SDL2 development files. For Debian-based distributions: \\ \texttt{\# apt-get install git build-essential qt4-qmake libsdl2-dev}
+  \item Clone the \url{https://github.com/Nadrin/B1.git} repository.
+  \item \texttt{cd} to your cloned local copy and run: \\ \texttt{\$ qmake \&\& make}
+  \item If compilation went well you should have \texttt{B1} executable file in your current directory.
+\end{enumerate}
+
+\subsubsection*{Windows}
+Pre-built Windows binaries are available here: \url{LOL}
+
+If you want to build the emulator yourself, the easiest way to do it is to use \href{http://www.qt.io/download-open-source/}{Qt Creator}. Building on Windows has been tested with \href{http://www.visualstudio.com/en-us/products/visual-studio-community-vs.aspx}{Visual Studio} compiler although MinGW should also work.
+
+\begin{enumerate}
+  \item Clone the \url{https://github.com/Nadrin/B1.git} repository (for example using \href{https://windows.github.com/}{GitHub for Windows}).
+  \item Download \href{LOL}{B1 Windows SDK} and unzip it to your cloned local copy. You should now have \texttt{winsdk} directory in the same directory as \texttt{B1.pro} file.
+  \item Open \texttt{B1.pro} file in QtCreator, configure the project with your toolchain of choice and build. Remember to select "Release" configuration before building.
+\end{enumerate}
+
+\subsection{Obtaining the ROM file}
+\label{sec:rom}
+In order to use the emulator you will need a compatible ROM file. Pre-built stock ROM is available here: \url{LOL}
+
+Stock ROM source is located in the \texttt{rom} directory of the B1 git repository. To build it yourself:
+\subsubsection*{Linux}
+\begin{itemize}
+  \item Download and install \href{http://cc65.github.io/cc65/}{cc65 Compiler Suite}. The \texttt{ca65} and \texttt{ld65} binaries should be in your PATH.
+  \item \texttt{cd} into the \texttt{rom} subdirectory of your cloned local copy and run \\ \texttt{\$ make}
+  \item You should now have \texttt{rom.bin} file in your current directory.
+\end{itemize}
+
+\subsubsection*{Windows}
+\begin{itemize}
+  \item The \href{LOL}{B1 Windows SDK} includes everything needed to build the stock ROM file.
+  \item Start the SDK shell by running \texttt{winsdk\textbackslash{}shell.bat}
+  \item From the SDK shell command line run \\ \texttt{> make}
+  \item You should now have \texttt{rom.bin} file in your current directory.
+\end{itemize}
+
 \subsection{Running}
+The emulator needs a valid ROM file to run. 
+
+By default it tries to load \texttt{rom.bin} in the current working directory. Optionally a path to ROM file can be passed as a command line argument: \\ \texttt{\$ B1 /home/user/myrom.bin}
+
+On Windows you can drag \& drop a ROM file onto \texttt{B1.exe}.
+
+\subsection{Programming}
+Writing programs for B1 is quite easy due to simplistic nature of the system. This section shows how to create a simple "Hello World" program and run it from the System Monitor prompt.
+
+To program B1 you must be able to build your own ROM file. Refer to sections \ref{sec:installing} and \ref{sec:rom} for details how to setup your environment.
+
+Now, let's write some assembly! Create \texttt{rom/hello.s} file with the following contents:
+
+\begin{lstlisting}[caption=Hello World for B1 in 6502 Assembly]
+.segment "HELLO"	; Declare segment HELLO
+.org $0200		; at address $0200
+
+HELLO:
+        LDX #0		; Load 0 into X register
+@LOOP:
+        LDA TEXT,X	; Load X-th byte of TEXT into A
+	BEQ @EXIT	; Finish if 0 (null terminator)
+        JSR $FF06	; Call BIOS PUTCHR
+        INX 		; Increment X register
+        JMP @LOOP	; Jump to next loop iteration
+@EXIT:
+        RTS 		; Return to the monitor
+
+TEXT: .byte $0D,"Hello World!",$00
+\end{lstlisting}
+
+We need to add this program to our ROM file. This involves two steps: adding our \texttt{HELLO} segment to the linker layout and editing the makefile so that our assembly source gets compiled and linked in. Add the following line to the \texttt{SEGMENTS} section of \texttt{rom/layout.cfg} file:
+\begin{lstlisting}[numbers=none]
+HELLO:   load=RAM, type=rw, offset=$0200;
+\end{lstlisting}
+
+Now edit \texttt{rom/Makefile}. Add new target \texttt{hello.o}:
+\begin{lstlisting}[numbers=none]
+hello.o: hello.s
+	$(CA65) hello.s -o hello.o
+\end{lstlisting}
+
+Then add \texttt{hello.o} target to the dependency list of \texttt{rom.bin}. It should look like this:
+\begin{lstlisting}[numbers=none]
+rom.bin: font.o bios.o jmon.o demo.o basic.o hello.o
+        $(LD65) -vm -m rom.map -C layout.cfg -o $@ $^
+\end{lstlisting}
+
+Now we're ready to build. Enter \texttt{rom} directory (on Windows run \texttt{winsdk\textbackslash{}shell.bat}) and run \texttt{make} then start the emulator (make sure to use the newly built ROM file).
+
+In the System Monitor prompt type \texttt{G 0200} and press ENTER.
+
+Congratulations! You've just written your first program for the B1.
 
 \end{document}
