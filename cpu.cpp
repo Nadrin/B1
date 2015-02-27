@@ -46,8 +46,28 @@ void CPU::Tick()
 
         const int SleepTicks = 1000/VideoHz - (SDL_GetTicks() - LastSleepTicks);
         if(SleepTicks > 0)
-            SDL_Delay(SleepTicks);
+            Sleep(SleepTicks);
         LastSleepTicks = SDL_GetTicks();
+    }
+}
+
+void CPU::Sleep(S32 DeltaTime) const
+{
+    U32 Timestamp;
+
+    if(DeltaTime > TIMERES) {
+        Timestamp = SDL_GetTicks();
+        SDL_Delay(DeltaTime - TIMERES);
+        DeltaTime -= (SDL_GetTicks() - Timestamp);
+    }
+
+    for(Timestamp = SDL_GetTicks(); DeltaTime > 0;) {
+        const U32 TimeNow     = SDL_GetTicks();
+        const S32 TicksPassed = (TimeNow - Timestamp);
+        if(TicksPassed > 0) {
+            DeltaTime -= TicksPassed;
+            Timestamp = TimeNow;
+        }
     }
 }
 

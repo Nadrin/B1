@@ -86,6 +86,8 @@ private:
     U32 LastSleepTicks;
 
 private:
+    void Sleep(S32 DeltaTime) const;
+
     inline U8 ReadImmediate();
     inline U16 ReadImmediate16();
     inline U16 ReadZeroPage16(U8 Index=0);
