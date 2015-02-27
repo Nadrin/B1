@@ -2016,7 +2016,7 @@ BASICPresent:
 ; Strings
 
 WelcomeMessage:
-	.byte CR,"BENDER-I Computer Monitor",CR,0
+	.byte CR,"BENDER-I System Monitor",CR,0
 
 PromptString:
 	.asciiz "> "
