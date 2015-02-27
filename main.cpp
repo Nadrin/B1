@@ -3,6 +3,7 @@
  * (c) 2014-2015 Michał Siejak
  */
 
+#include <cstring>
 #include <fstream>
 #include "cpu.h"
 
@@ -10,6 +11,12 @@ int main(int argc, char** argv)
 {
     std::printf("BENDER-I Computer Emulator\n");
     std::printf("(c) 2015 Michal Siejak <michal@siejak.pl>\n\n");
+
+    if(argc >= 2 && (std::strcmp(argv[1], "-h") == 0 ||
+                     std::strcmp(argv[1], "--help") == 0)) {
+        std::printf("Usage: %s [romfile]\n", argv[0]);
+        return 0;
+    }
 
     if(SDL_Init(SDL_INIT_EVENTS) < 0) {
         std::fprintf(stderr, "Cannot initialize SDL!\n");

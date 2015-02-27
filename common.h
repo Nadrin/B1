@@ -14,6 +14,12 @@
 #define UNUSED(x) (void)(x)
 #endif
 
+#ifdef _MSC_VER
+#if _MSC_VER <= 1800
+#define constexpr const
+#endif
+#endif // _MSC_VER
+
 typedef int8_t   S8;
 typedef uint8_t  U8;
 typedef int16_t  S16;

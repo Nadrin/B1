@@ -25,9 +25,9 @@ namespace {
         RegCharMapPage = 0x0B,
     };
 
-    const U16 FrameBegin[] = { 0 + (Overscan>>1), 0 + (Overscan>>1) };
-    const U16 FrameEnd[]   = { FrameBegin[0] + FrameW-1, FrameBegin[1] + FrameH-1 };
-    const U16 ScreenEnd[]  = { FrameEnd[0] + (Overscan>>1), FrameEnd[1] + (Overscan>>1) };
+    constexpr U16 FrameBegin[] = { 0 + (Overscan>>1), 0 + (Overscan>>1) };
+    constexpr U16 FrameEnd[]   = { FrameBegin[0] + FrameW-1, FrameBegin[1] + FrameH-1 };
+    constexpr U16 ScreenEnd[]  = { FrameEnd[0] + (Overscan>>1), FrameEnd[1] + (Overscan>>1) };
 }
 
 VPU::VPU(CPU* InCPU)
