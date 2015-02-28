@@ -6,7 +6,9 @@
 
 Currently there are no hardware implementations of the B1 computer. The reference, and only, implementation is the B1 Emulator.
 
-For source code, emulator binaries and documentation related to B1 visit: https://github.com/Nadrin/B1.
+For source code, emulator binaries and documentation related to B1 visit: https://www.siejak.pl/projects/b1
+
+The B1 manual is available here: https://www.siejak.pl/files/b1/b1-manual.pdf
 
 ![Bender](https://raw.githubusercontent.com/Nadrin/B1/master/doc/bender.jpg)
 

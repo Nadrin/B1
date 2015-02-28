@@ -290,19 +290,19 @@ The emulator depends on \href{https://www.libsdl.org/download-2.0.php}{SDL2} and
 \end{enumerate}
 
 \subsubsection*{Windows}
-Pre-built Windows binaries are available here: \url{LOL}
+Pre-built Windows binaries are available here: \url{https://www.siejak.pl/files/b1/}
 
-If you want to build the emulator yourself, the easiest way to do it is to use \href{http://www.qt.io/download-open-source/}{Qt Creator}. Building on Windows has been tested with \href{http://www.visualstudio.com/en-us/products/visual-studio-community-vs.aspx}{Visual Studio} compiler although MinGW should also work.
+If you want to build the emulator yourself, the easiest way to do it is to use \href{http://www.qt.io/download-open-source/}{Qt Creator}. Building on Windows has been tested with \href{http://www.visualstudio.com/en-us/products/visual-studio-community-vs.aspx}{Visual Studio} compiler although, with minimal modifications, MinGW should also work.
 
 \begin{enumerate}
   \item Clone the \url{https://github.com/Nadrin/B1.git} repository (for example using \href{https://windows.github.com/}{GitHub for Windows}).
-  \item Download \href{LOL}{B1 Windows SDK} and unzip it to your cloned local copy. You should now have \texttt{winsdk} directory in the same directory as \texttt{B1.pro} file.
+  \item Download \href{https://www.siejak.pl/files/b1/b1-winsdk.zip}{B1 Windows SDK} and unzip it to your cloned local copy. You should now have \texttt{winsdk} directory in the same directory as \texttt{B1.pro} file.
   \item Open \texttt{B1.pro} file in QtCreator, configure the project with your toolchain of choice and build. Remember to select "Release" configuration before building.
 \end{enumerate}
 
 \subsection{Obtaining the ROM file}
 \label{sec:rom}
-In order to use the emulator you will need a compatible ROM file. Pre-built stock ROM is available here: \url{LOL}
+In order to use the emulator you will need a compatible ROM file. Pre-built stock ROM is available here: \url{https://www.siejak.pl/files/b1/}
 
 Stock ROM source is located in the \texttt{rom} directory of the B1 git repository. To build it yourself:
 \subsubsection*{Linux}
@@ -314,7 +314,7 @@ Stock ROM source is located in the \texttt{rom} directory of the B1 git reposito
 
 \subsubsection*{Windows}
 \begin{itemize}
-  \item The \href{LOL}{B1 Windows SDK} includes everything needed to build the stock ROM file.
+  \item The \href{https://www.siejak.pl/files/b1/b1-winsdk.zip}{B1 Windows SDK} includes everything needed to build the stock ROM file.
   \item Start the SDK shell by running \texttt{winsdk\textbackslash{}shell.bat}
   \item From the SDK shell command line run \\ \texttt{> make}
   \item You should now have \texttt{rom.bin} file in your current directory.
@@ -373,6 +373,6 @@ Now we're ready to build. Enter \texttt{rom} directory (on Windows run \texttt{w
 
 In the System Monitor prompt type \texttt{G 0200} and press ENTER.
 
-Congratulations! You've just written your first program for the B1.
+Congratulations! You've just written and ran your first program for the B1.
 
 \end{document}
