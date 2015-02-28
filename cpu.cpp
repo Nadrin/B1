@@ -18,7 +18,10 @@ CPU::CPU(const U32 InFreq, const U16 InHz, const char* Program, U16 Offset, size
     , Kbd(this)
     , Interrupt(INT_Reset)
 {
-    SDL_InitSubSystem(SDL_INIT_TIMER);
+    if(SDL_InitSubSystem(SDL_INIT_TIMER) < 0) {
+        throw Device::Error(SDL_GetError());
+    }
+
     FlagRegister() = 0;
     std::memcpy(&RAM.Memory[Offset], Program, Size);
 

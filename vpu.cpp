@@ -38,11 +38,19 @@ VPU::VPU(CPU* InCPU)
     const U16 Width  = FrameW + Overscan;
     const U16 Height = FrameH + Overscan;
 
-    SDL_InitSubSystem(SDL_INIT_VIDEO);
+    if(SDL_InitSubSystem(SDL_INIT_VIDEO) < 0) {
+        throw Device::Error(SDL_GetError());
+    }
 
-    Window   = SDL_CreateWindow("B1 Display", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, Width*2, Height*2, 0);
-    Renderer = SDL_CreateRenderer(Window, -1, 0);
-    Texture  = SDL_CreateTexture(Renderer, SDL_PIXELFORMAT_ABGR8888, SDL_TEXTUREACCESS_STREAMING, Width, Height);
+    if(!(Window = SDL_CreateWindow("B1 Display", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, Width*2, Height*2, 0))) {
+        throw Device::Error(SDL_GetError());
+    }
+    if(!(Renderer = SDL_CreateRenderer(Window, -1, 0))) {
+        throw Device::Error(SDL_GetError());
+    }
+    if(!(Texture = SDL_CreateTexture(Renderer, SDL_PIXELFORMAT_ABGR8888, SDL_TEXTUREACCESS_STREAMING, Width, Height))) {
+        throw Device::Error(SDL_GetError());
+    }
 
     for(int Reg=RegScanline; Reg<=RegCharMapPage; Reg++) {
         RAM.AllocRegister<VPU>(Reg, this, &VPU::ReadRegister, &VPU::WriteRegister);

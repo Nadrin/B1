@@ -7,6 +7,7 @@
 #define DEVICE_H
 
 #include "common.h"
+#include <stdexcept>
 
 class CPU;
 class MCC;
@@ -15,6 +16,10 @@ class Device
 {
 public:
     virtual void Tick(const U32 DeltaCycles) { UNUSED(DeltaCycles); }
+
+    struct Error : public std::runtime_error {
+        explicit Error(const char* what) : std::runtime_error(what) {}
+    };
 
 protected:
     Device(CPU* InCPU);

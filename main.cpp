@@ -40,7 +40,13 @@ int main(int argc, char** argv)
             return 3;
         }
 
-        TheCPU = new CPU(CPUFREQ, VIDEOHZ, Buffer, 0, sizeof(Buffer));
+        try {
+            TheCPU = new CPU(CPUFREQ, VIDEOHZ, Buffer, 0, sizeof(Buffer));
+        }
+        catch(const Device::Error& Error) {
+            std::fprintf(stderr, "Error: %s\n", Error.what());
+            return 4;
+        }
     }
 
     bool ShouldQuit = false;

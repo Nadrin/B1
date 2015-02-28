@@ -32,7 +32,9 @@ SPU::SPU(CPU *InCPU)
     , WriteCursor(0)
     , BytesAvailable(0)
 {
-    SDL_InitSubSystem(SDL_INIT_AUDIO);
+    if(SDL_InitSubSystem(SDL_INIT_AUDIO) < 0) {
+        throw Device::Error(SDL_GetError());
+    }
 
     SDL_AudioSpec InAudioSpec;
     std::memset(&InAudioSpec, 0, sizeof(SDL_AudioSpec));
@@ -43,18 +45,22 @@ SPU::SPU(CPU *InCPU)
     InAudioSpec.callback = SPU::AudioCallback;
     InAudioSpec.userdata = this;
 
-    AudioDevice = SDL_OpenAudioDevice(nullptr, 0, &InAudioSpec, &AudioSpec, 0);
-    if(AudioDevice) {
-        BufferSize     = 4 * AudioSpec.size;
-        CyclesPerTick  = TheCPU.Frequency / AudioSpec.freq;
-        BytesAvailable = BufferSize;
-
-        Buffer = new U8[BufferSize];
-        std::memset(Buffer, AudioSpec.silence, BufferSize);
-        SDL_PauseAudioDevice(AudioDevice, 0);
-
-        SetKey(0);
+    if(!(AudioDevice = SDL_OpenAudioDevice(nullptr, 0, &InAudioSpec, &AudioSpec, 0))) {
+        throw Device::Error(SDL_GetError());
     }
+
+    BufferSize     = 4 * AudioSpec.size;
+    CyclesPerTick  = TheCPU.Frequency / AudioSpec.freq;
+    BytesAvailable = BufferSize;
+
+    Buffer = new(std::nothrow) U8[BufferSize];
+    if(!Buffer) {
+        throw Device::Error("Could not allocate memory");
+    }
+    std::memset(Buffer, AudioSpec.silence, BufferSize);
+    SDL_PauseAudioDevice(AudioDevice, 0);
+
+    SetKey(0);
 
     RAM.AllocRegister<SPU>(RegAudioCtl,  this, &SPU::ReadRegister, &SPU::WriteRegister);
     RAM.AllocRegister<SPU>(RegFrequency, this, &SPU::ReadRegister, &SPU::WriteRegister);
