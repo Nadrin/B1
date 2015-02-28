@@ -24,7 +24,7 @@ CPU::CPU(const U32 InFreq, const U16 InHz, const char* Program, U16 Offset, size
 
     CyclesPerJiffy   = (1000/VideoHz * Frequency) / 1000;
     CyclesSinceSleep = 0;
-    LastSleepTicks   = SDL_GetTicks();
+    LastTimestamp    = SDL_GetTicks();
 
     std::printf("CPU is 6502 compatible running at %d cycles per second\n", Frequency);
     std::printf("Target video refresh rate is %dHz, jiffy is %d cycles\n", VideoHz, CyclesPerJiffy);
@@ -42,32 +42,17 @@ void CPU::Tick()
 
     CyclesSinceSleep += Cycles;
     if(CyclesSinceSleep >= CyclesPerJiffy) {
-        CyclesSinceSleep -= CyclesPerJiffy;
-
-        const int SleepTicks = 1000/VideoHz - (SDL_GetTicks() - LastSleepTicks);
-        if(SleepTicks > 0)
-            Sleep(SleepTicks);
-        LastSleepTicks = SDL_GetTicks();
-    }
-}
-
-void CPU::Sleep(S32 DeltaTime) const
-{
-    U32 Timestamp;
-
-    if(DeltaTime > TIMERES) {
-        Timestamp = SDL_GetTicks();
-        SDL_Delay(DeltaTime - TIMERES);
-        DeltaTime -= (SDL_GetTicks() - Timestamp);
-    }
-
-    for(Timestamp = SDL_GetTicks(); DeltaTime > 0;) {
-        const U32 TimeNow     = SDL_GetTicks();
-        const S32 TicksPassed = (TimeNow - Timestamp);
-        if(TicksPassed > 0) {
-            DeltaTime -= TicksPassed;
-            Timestamp = TimeNow;
+        const S32 TimeToSleep = 1000/VideoHz - (SDL_GetTicks() - LastTimestamp);
+        if(TimeToSleep > 0) {
+            SDL_Delay(TimeToSleep);
         }
+
+        const U32 TimeNow       = SDL_GetTicks();
+        const U32 TimeElapsed   = TimeNow - LastTimestamp;
+        const U32 CyclesElapsed = TimeElapsed/1000.0 * Frequency;
+
+        CyclesSinceSleep -= CyclesElapsed;
+        LastTimestamp     = TimeNow;
     }
 }
 
