@@ -18,6 +18,9 @@ win32 {
     DEFINES += SDL_MAIN_HANDLED
     INCLUDEPATH += "$$PWD/winsdk/include/"
     LIBS += -lSDL2
+
+    QMAKE_CXXFLAGS_RELEASE += /MT
+    QMAKE_CXXFLAGS_RELEASE -= -MD
 }
 
 SOURCES += main.cpp \
